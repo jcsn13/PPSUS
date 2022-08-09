@@ -4,7 +4,7 @@ This repository compromises processes and resources that are used to develop the
 
 ### Related Articles
 
-- Artificial Neural Network to Predict Structure-based Protein-protein Free Energy of Binding from Rosetta-calculated Properties(doi://insert_here) -> `binding_energy_experiments`
+- Artificial Neural Network to Predict Structure-based Protein-protein Free Energy of Binding from Rosetta-calculated Properties(doi:10.26434/chemrxiv-2022-zhd87) -> `binding_energy_experiments`
 
 ![](images/corona.png)
 
