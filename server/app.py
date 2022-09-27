@@ -1,13 +1,12 @@
 import pandas as pd
 import os
 import time
-import uvicorn
 from fastapi import FastAPI, UploadFile
 from model import PPSUS_binding_energy_regressor
 
 regressor = PPSUS_binding_energy_regressor(
     models_filepath="pickles",
-    models_number=10,
+    models_number=1,
     reducer_file_name="umap",
     scaler_file_name="scaler",
 )
@@ -48,7 +47,3 @@ async def add_process_time_header(request, call_next):
     process_time = time.time() - start_time
     response.headers["X-Process-Time"] = str(f"{process_time:0.4f} sec")
     return response
-
-
-if __name__ == "__main__":
-    uvicorn.run("app:app", port=8000, reload=False)
