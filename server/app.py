@@ -3,6 +3,8 @@ import os
 import time
 from fastapi import FastAPI, UploadFile
 from model import PPSUS_binding_energy_regressor
+from fastapi.middleware.cors import CORSMiddleware
+
 
 regressor = PPSUS_binding_energy_regressor(
     models_filepath="pickles",
@@ -13,6 +15,7 @@ regressor = PPSUS_binding_energy_regressor(
 
 app = FastAPI()
 
+origins = ["*"]
 
 @app.post("/predictions")
 async def root(file: UploadFile) -> dict:
@@ -39,6 +42,14 @@ async def root(file: UploadFile) -> dict:
         }
     return data
 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.middleware("http")
 async def add_process_time_header(request, call_next):
