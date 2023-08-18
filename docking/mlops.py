@@ -35,46 +35,44 @@ def set_credentials():
 
 
 def train_model(x_train, x_test, y_train, y_test, ml_model, params):
-    set_credentials()
+    kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+    model = GridSearchCV(ml_model, params, cv=kfold, n_jobs=-1)
+    model.fit(x_train, y_train)
 
-    with mlflow.start_run():
-        kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
-        model = GridSearchCV(ml_model, params, cv=kfold, n_jobs=-1)
-        model.fit(x_train, y_train)
+    y_pred = model.predict(x_test)
 
-        y_pred = model.predict(x_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    recall = recall_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred)
+    roc_auc = roc_auc_score(y_test, y_pred)
 
-        accuracy = accuracy_score(y_test, y_pred)
-        recall = recall_score(y_test, y_pred)
-        precision = precision_score(y_test, y_pred)
-        roc_auc = roc_auc_score(y_test, y_pred)
+    best_params = model.best_params_
 
-        mlflow.log_metric("accuracy", accuracy)
-        mlflow.log_metric("recall", recall)
-        mlflow.log_metric("precision", precision)
-        mlflow.log_metric("roc_auc", roc_auc)
+    fig, ax = plt.subplots()
+    plot_precision_recall_curve(model, x_test, y_test, ax=ax)
+    plt.savefig("precision_recall_plot.png")
+    precision_recall_image = open("precision_recall_plot.png", "rb").read()
+    os.remove("precision_recall_plot.png")
 
-        best_params = model.best_params_
-        for param, value in best_params.items():
-            mlflow.log_param(param, value)
+    fig, ax = plt.subplots()
+    plot_roc_curve(model, x_test, y_test, ax=ax)
+    plt.savefig("roc_auc_plot.png")
+    roc_auc_image = open("roc_auc_plot.png", "rb").read()
+    os.remove("roc_auc_plot.png")
 
-        fig, ax = plt.subplots()
-        plot_precision_recall_curve(model, x_test, y_test, ax=ax)
-        plt.savefig("precision_recall_plot.png")
-        mlflow.log_artifact("precision_recall_plot.png")
-        os.remove("precision_recall_plot.png")
+    fig, ax = plt.subplots()
+    cm = confusion_matrix(y_test, y_pred)
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", ax=ax)
+    plt.savefig("confusion_matrix.png")
+    confusion_matrix_image = open("confusion_matrix.png", "rb").read()
+    os.remove("confusion_matrix.png")
 
-        fig, ax = plt.subplots()
-        plot_roc_curve(model, x_test, y_test, ax=ax)
-        plt.savefig("roc_auc_plot.png")
-        mlflow.log_artifact("roc_auc_plot.png")
-        os.remove("roc_auc_plot.png")
+    print("Best parameters found by GridSearchCV:", best_params)
 
-        fig, ax = plt.subplots()
-        cm = confusion_matrix(y_test, y_pred)
-        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", ax=ax)
-        plt.savefig("confusion_matrix.png")
-        mlflow.log_artifact("confusion_matrix.png")
-        os.remove("confusion_matrix.png")
-
-        print("Best parameters found by GridSearchCV:", best_params)
+    return {
+        "accuracy": accuracy,
+        "recall": recall,
+        "precision": precision,
+        "roc_auc": roc_auc,
+        "best_params": best_params
+    }
